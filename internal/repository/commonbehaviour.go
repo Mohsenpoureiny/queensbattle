@@ -10,19 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var _ CommonBehaviou[entity.Entity] = &RedisCommandBehaviour[entity.Entity]{}
-
-type CommonBehaviou[T entity.Entity] interface {
-	Get(ctx context.Context, id entity.ID) (T, error)
-	Save(ctx context.Context, ent entity.Entity) error
-}
+var _ CommonBehaviour[entity.Entity] = &RedisCommandBehaviour[entity.Entity]{}
 
 type RedisCommandBehaviour[T entity.Entity] struct {
 	client rueidis.Client
 }
 
-func NewRedisCommonBehaviour[T entity.Entity](client rueidis.Client) RedisCommandBehaviour[T] {
-	return RedisCommandBehaviour[T]{
+func NewRedisCommonBehaviour[T entity.Entity](client rueidis.Client) *RedisCommandBehaviour[T] {
+	return &RedisCommandBehaviour[T]{
 		client: client,
 	}
 }
@@ -30,12 +25,13 @@ func (r RedisCommandBehaviour[T]) Get(ctx context.Context, id entity.ID) (T, err
 	var t T
 	cmd := r.client.B().JsonGet().Key(id.String()).Path(".").Build()
 	val, err := r.client.Do(ctx, cmd).ToString()
+
 	if err != nil {
 		// handle redis nil error
 		if errors.Is(err, rueidis.Nil) {
 			return t, ErrNotFound
 		}
-		logrus.WithError(err).WithField("id", id).Errorln("couldn't retrive")
+		logrus.WithError(err).WithField("id", id).Errorln("couldn't retrieve")
 		return t, err
 	}
 	return jsonhelper.Decode[T]([]byte(val)), nil

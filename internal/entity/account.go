@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -14,6 +13,6 @@ type Account struct {
 	DisplayName string `json:"display_name"`
 }
 
-func (a *Account) EntityID() ID {
-	return ID(fmt.Sprintf("account:%d", a.ID))
+func (a Account) EntityID() ID {
+	return NewID("account", a.ID)
 }

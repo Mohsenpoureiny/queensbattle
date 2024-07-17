@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type RetryFunc func(resource *dockertest.Resource) error
+
 func IsIntegration() bool {
 	return os.Getenv("TEST_INTEGRATION") == "true"
 }
@@ -23,7 +25,7 @@ func StartDockerPool() *dockertest.Pool {
 	}
 	return pool
 }
-func StartDockerInstance(pool *dockertest.Pool, image, tag string, env ...string) *dockertest.Resource {
+func StartDockerInstance(pool *dockertest.Pool, image, tag string, retryFunc RetryFunc, env ...string) *dockertest.Resource {
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: image,
 		Tag:        tag,
@@ -34,11 +36,21 @@ func StartDockerInstance(pool *dockertest.Pool, image, tag string, env ...string
 			Name: "no",
 		}
 	})
-	if err := resource.Expire(120); err != nil {
-		logrus.WithError(err).Fatal("couldn't set the resource expration")
-	}
+
 	if err != nil {
 		logrus.WithError(err).Fatal("Could not start resource", err)
 	}
+
+	if err := resource.Expire(120); err != nil {
+
+		logrus.WithError(err).Fatal("couldn't set the resource expiration")
+	}
+
+	if err := pool.Retry(func() error {
+		return retryFunc(resource)
+	}); err != nil {
+		logrus.WithError(err).Fatal("Could not connect to resource")
+	}
+
 	return resource
 }
