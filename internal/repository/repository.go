@@ -10,6 +10,7 @@ var (
 	ErrNotFound = errors.New("entity not found")
 )
 
+//go:generate mockery --name AccountRepository
 type AccountRepository interface {
 	CommonBehaviour[entity.Account]
 }
