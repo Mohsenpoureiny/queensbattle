@@ -20,6 +20,10 @@ func NewAccountService(rep repository.AccountRepository) *AccountService {
 	return &AccountService{accounts: rep}
 }
 
+func (a *AccountService) Update(ctx context.Context, account entity.Account) error {
+	return a.accounts.Save(ctx, account)
+}
+
 func (a *AccountService) CreateOrUpdate(ctx context.Context, account entity.Account) (entity.Account, bool, error) {
 	savedAccount, err := a.accounts.Get(ctx, account.EntityID())
 
@@ -42,7 +46,3 @@ func (a *AccountService) CreateOrUpdate(ctx context.Context, account entity.Acco
 
 	return entity.Account{}, false, err
 }
-
-//func (a *AccountService) UpdateState(ctx context.Context, account entity.Account) (entity.Account, bool, error) {
-//
-//}

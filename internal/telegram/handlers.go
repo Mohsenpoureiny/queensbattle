@@ -6,9 +6,14 @@ import (
 
 func (t *Telegram) setupHandlers() {
 	t.bot.Use(t.registerMiddleware)
-	t.bot.Handle(telebot.OnText, t.start)
+	t.bot.Handle("/start", t.start)
+	t.bot.Handle(telebot.OnText, t.textHandler)
 }
 
-func (t *Telegram) start(c telebot.Context) error {
-	return c.Reply("HELLO")
+func (t *Telegram) textHandler(context telebot.Context) error {
+	if t.TelePrompt.Dispatch(context.Sender().ID, context) {
+		return nil
+	}
+
+	return context.Reply("I didn't understand")
 }

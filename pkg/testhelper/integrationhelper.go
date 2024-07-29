@@ -13,18 +13,20 @@ type RetryFunc func(resource *dockertest.Resource) error
 func IsIntegration() bool {
 	return os.Getenv("TEST_INTEGRATION") == "true"
 }
+
 func StartDockerPool() *dockertest.Pool {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		logrus.WithError(err).Fatal("Could not construct pool", err)
+		logrus.WithError(err).Fatal("could not construct pool", err)
 	}
 	// uses pool to try to connect to Docker
 	err = pool.Client.Ping()
 	if err != nil {
-		logrus.WithError(err).Fatal("Could not connect to Docker", err)
+		logrus.WithError(err).Fatal("could not connect to Docker", err)
 	}
 	return pool
 }
+
 func StartDockerInstance(pool *dockertest.Pool, image, tag string, retryFunc RetryFunc, env ...string) *dockertest.Resource {
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: image,
@@ -38,7 +40,7 @@ func StartDockerInstance(pool *dockertest.Pool, image, tag string, retryFunc Ret
 	})
 
 	if err != nil {
-		logrus.WithError(err).Fatal("Could not start resource", err)
+		logrus.WithError(err).Fatal("could not start resource", err)
 	}
 
 	if err := resource.Expire(120); err != nil {
@@ -49,7 +51,7 @@ func StartDockerInstance(pool *dockertest.Pool, image, tag string, retryFunc Ret
 	if err := pool.Retry(func() error {
 		return retryFunc(resource)
 	}); err != nil {
-		logrus.WithError(err).Fatal("Could not connect to resource")
+		logrus.WithError(err).Fatal("could not connect to resource")
 	}
 
 	return resource
